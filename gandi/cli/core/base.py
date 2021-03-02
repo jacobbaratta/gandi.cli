@@ -136,13 +136,29 @@ class GandiModule(GandiConfig):
                          "'gandi setup' command")
                 sys.exit(1)
             if send_key:
+            	# https://github.com/srgvg/gandi.cli/commit/15004e3e724e5e79c0fbcc495e5bc2057ad9ff92 START
                 if 'headers' in kwargs:
-                    kwargs['headers'].update({'X-Api-Key': apikey})
+                    if url.startswith('https://api.gandi.net/v5/domain'):
+                        kwargs['headers'].update({'authorization': 'apikey ' + apikey})
+                    else:
+                        kwargs['headers'].update({'X-Api-Key': apikey})
                 else:
-                    kwargs['headers'] = {'X-Api-Key': apikey}
+                    if url.startswith('https://api.gandi.net/v5/domain'):
+                        kwargs['headers'] = {'authorization': 'apikey ' + apikey}
+                    else:
+                        kwargs['headers'] = {'X-Api-Key': apikey}
+                # https://github.com/srgvg/gandi.cli/commit/15004e3e724e5e79c0fbcc495e5bc2057ad9ff92 END
         except MissingConfiguration:
             if not empty_key:
                 return []
+        # https://github.com/Gandi/gandi.cli/commit/3b7a62a32bc575b3cb23e56d22dc31baf750cf5d START
+        sharing_id = cls.get('apirest.sharing_id')
+        if sharing_id:
+            if '?' in url:
+                url = '%s&sharing_id=%s' % (url, sharing_id)
+            else:
+                url = '%s?sharing_id=%s' % (url, sharing_id)
+        # https://github.com/Gandi/gandi.cli/commit/3b7a62a32bc575b3cb23e56d22dc31baf750cf5d END
         # make the call
         cls.debug('calling url: %s %s' % (method, url))
         cls.debug('with params: %r' % kwargs)
